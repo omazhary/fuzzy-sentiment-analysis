@@ -11,8 +11,11 @@ class ClauseExtractor
         @src_text = text
     end
 
-    def split_on_space
-        @clause_list = @src_text.split(" ")
+    def split_clauses
+        @clause_list = @src_text.split(/[\,\.\?\!]+/)
+        self.clause_list.each do |clause|
+            clause = clause.strip!
+        end
     end
 
 end
