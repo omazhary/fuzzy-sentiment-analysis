@@ -1,12 +1,10 @@
 # This is the main file that will run this program
 
-require_relative 'manipulation_syntax/clause_extractor'
+require_relative 'nlp/paragraph'
 
-clause_extractor = ClauseExtractor.new("This is the first sentence. And this is the second one.")
+test_text1 = "This is the first sentence. And this is the second one."
 
-clause_extractor.src_text = "sentences, much more than sentences. SENTENCES! Give me more? And he said \"Ta-Da\""
-clause_extractor.split_clauses
+test_text2 = "sentences, much more than sentences. SENTENCES! Give me more? And he said \"Ta-Da\""
 
-clause_extractor.clause_list.each do |clause|
-    puts clause
-end
+para1 = Paragraph.new(test_text1)
+puts para1.sentence_list.inspect
