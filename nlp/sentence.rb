@@ -9,9 +9,10 @@ module NLP
         attr_accessor :src_text
         attr_reader :clause_list
 
-        def initialize(text = "")
+        def initialize(text = "", wn_agent = WORDNET::WordNetAgent.new)
             @src_text = text
             @clause_list = []
+            @wn_agent = wn_agent
             self.split_clauses
         end
 
@@ -19,7 +20,7 @@ module NLP
             clauses_raw = @src_text.split(/[\,\.\?\!]+/)
             clauses_raw.each do |clause_raw|
                 clause_raw = clause_raw.strip
-                @clause_list.push(Clause.new(clause_raw))
+                @clause_list.push(Clause.new(clause_raw, @wn_agent))
             end
         end
 
