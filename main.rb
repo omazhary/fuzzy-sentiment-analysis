@@ -1,13 +1,6 @@
 # This is the main file that will run this program
 
-require_relative 'nlp/text'
-require_relative 'wordnet/wnagent'
+require_relative 'textmining/sentalysis/uncertain_trainer'
 
-test_text1 = "This is the first sentence. And this is the second one."
-
-test_text2 = "sentences, much more than sentences. SENTENCES! Give me more? And he said \"Ta-Da\""
-
-wn_agent = WORDNET::WordNetAgent.new
-
-para1 = NLP::Text.new(test_text1, wn_agent)
-para2 = NLP::Text.new(test_text2, wn_agent)
+trainer = SENTALYSIS::UncertainTrainer.new("polarity_index.json")
+trainer.train("bla", "negative")
