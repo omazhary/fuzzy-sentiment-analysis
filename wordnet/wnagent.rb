@@ -29,6 +29,7 @@ require 'logger/colors'
                 query_response = query_http.request(query_request)
             rescue
                 @logger.fatal("An exception occured with the HTTP request \"#{@query_full}\"\n which returned a code #{query_response.code}")
+                abort("Aborting due to error.")
             end
             if query_response.code != "200"
                 @logger.error("An error occured with the HTTP request \"#{@query_full}\"\n which returned a code #{query_response.code}")
