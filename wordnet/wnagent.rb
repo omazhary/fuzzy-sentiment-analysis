@@ -50,7 +50,7 @@ require 'logger/colors'
                 if type.text == "Your search did not return any results."
                     @logger.error("WordNet was unable to recognize the word #{word}")
                 else
-                    word_type.push(type.text)
+                    word_type.push(type.text.downcase)
                 end
             end
             if types.length == 0
