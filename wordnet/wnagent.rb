@@ -12,10 +12,13 @@ require 'logger/colors'
 
         attr_reader :response
 
-        def initialize()
+        def initialize(log_level)
             @@wn_word_uri = "http://wordnetweb.princeton.edu/perl/webwn?s="
             @response = ""
             @logger = Logger.new(STDERR)
+            @logger.level = log_level
+            @cache_unrecognizable = []
+            @cache_processed = Hash.new
         end
 
         # Sends word queries to wordnet's web interface.
@@ -28,8 +31,7 @@ require 'logger/colors'
                 query_request = Net::HTTP::Get.new(query_uri.request_uri)
                 query_response = query_http.request(query_request)
             rescue
-                @logger.fatal("An exception occured with the HTTP request \"#{@query_full}\"\n which returned a code #{query_response.code}")
-                abort("Aborting due to error.")
+                @logger.error("An exception occured with the HTTP request \"#{@query_full}\"")
             end
             if query_response.code != "200"
                 @logger.error("An error occured with the HTTP request \"#{@query_full}\"\n which returned a code #{query_response.code}")
@@ -44,19 +46,31 @@ require 'logger/colors'
         # Gets the type(s) of a word by querying wordnet
         def get_word_type(word = "")
             word_type = []
+            # Check cache first:
+            if @cache_unrecognizable.include? word
+                return []
+            end
+            if @cache_processed.key? word
+                word_type = @cache_processed[word]
+                return word_type
+            end
+            # If it's not in the cache, query WordNet:
             send_query(word)
             types = @response.css("h3")
             types.each do |type|
                 if type.text == "Your search did not return any results."
                     @logger.error("WordNet was unable to recognize the word #{word}")
+                    @cache_unrecognizable.push(word)
                 else
                     word_type.push(type.text.downcase)
                 end
             end
             if types.length == 0
                 @logger.error("Unable to retrieve type for word #{word}.")
+                @cache_unrecognizable.push(word)
             elsif types.length > 1
                 @logger.info("Word #{word} has more than one type depending on the context.")
+                @cache_processed[word] = word_type
             end
             return word_type
         end
