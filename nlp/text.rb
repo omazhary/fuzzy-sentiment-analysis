@@ -20,6 +20,8 @@ module NLP
             # I will need to check the validity of this assumption when checking out corpora.
             paragraphs_raw = @src_text.split(/\n/)
             paragraphs_raw.each do |paragraph|
+                # Removing hyphenation helps normalize internet-lingo to some extent.
+                paragraph = paragraph.gsub(/-/, ' ')
                 paragraph = paragraph.strip
                 @paragraph_list.push(NLP::Paragraph.new(paragraph, @wn_agent))
             end

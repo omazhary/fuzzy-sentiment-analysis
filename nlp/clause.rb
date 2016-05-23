@@ -19,7 +19,9 @@ module NLP
             words_raw = @src_text.split
             words_raw.each do |word_raw|
                 word_raw = word_raw.strip
-                @word_list.push(Word.new(word_raw, @wn_agent))
+                if word_raw =~ /[A-Za-z0-9]+/
+                    @word_list.push(Word.new(word_raw, @wn_agent))
+                end
             end
         end
     end

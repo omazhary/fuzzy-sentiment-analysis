@@ -15,7 +15,7 @@ module NLP
                 @src_text = text
             end
             @wn_agent = wn_agent
-            types = @wn_agent.get_word_type(@src_text)
+            @types = @wn_agent.get_word_type(@src_text)
         end
     end
 
