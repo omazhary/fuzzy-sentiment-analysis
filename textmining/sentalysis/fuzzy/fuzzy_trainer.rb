@@ -29,9 +29,12 @@ module SENTALYSIS
         end
         
         def train
+            @logger.info("Starting training process...")
+            start_time = Time.now
             files = Dir.entries(@training_dir)
             files.each do |filename|
                 full_filename = File.absolute_path("#{training_dir}/#{filename}")
+                @logger.info("Processing file #{full_filename}...")
                 if File.exists?(full_filename) && File.file?(full_filename) && File.readable?(full_filename)
                     # Open the file and read its contents:
                     file = File.new(full_filename, "r")
@@ -39,19 +42,25 @@ module SENTALYSIS
                     file.close
                     # Parse the file using the NLP elements:
                     text = NLP::Text.new(src_text, @wordnet_agent)
-                    # Filter out adjectives:
                     text.paragraph_list.each do |paragraph|
                         paragraph.sentence_list.each do |sentence|
                             sentence.clause_list.each do |clause|
                                 clause.word_list.each do |word|
-                                    puts word.types.inspect
+                                    # Filter out adjectives:
+                                    if word.types.include? 'adjective'
+                                        # Update adjective polarity:
+                                        @polarity_index.update_polarity(word, @polarity)
+                                    end
                                 end
                             end
                         end
                     end
-                    # Update adjective polarity:
                 end
             end
+            @logger.info("Saving polarity index to disk...")
+            @polarity_index.save_polarity_file
+            end_time = Time.now
+            @logger.info("Training process ended after #{(end_time - start_time) / 60} minutes")
         end        
     end
     
