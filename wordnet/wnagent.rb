@@ -15,10 +15,33 @@ require 'logger/colors'
         def initialize(log_level)
             @@wn_word_uri = "http://wordnetweb.princeton.edu/perl/webwn?s="
             @response = ""
+            @query_counter = 0
             @logger = Logger.new(STDERR)
             @logger.level = log_level
             @cache_unrecognizable = []
             @cache_processed = Hash.new
+            if File.exists?("processed.json")
+                @logger.info("File \"processed.json\" found.")
+                begin
+                    contents = File.read("processed.json")
+                    @cache_processed = JSON.parse(contents)
+                rescue
+                    @logger.fatal("Unable to parse contents of file: \"processed.json\"")
+                    abort("Aborting due to error.")
+                end
+                @logger.info("Cache updated successfully.")
+            end
+            if File.exists?("unrecog.json")
+                @logger.info("File \"unrecog.json\" found.")
+                begin
+                    contents = File.read("unrecog.json")
+                    @cache_unrecognizable = JSON.parse(contents)
+                rescue
+                    @logger.fatal("Unable to parse contents of file: \"unrecog.json\"")
+                    abort("Aborting due to error.")
+                end
+                @logger.info("Cache updated successfully.")
+            end
         end
 
         # Sends word queries to wordnet's web interface.
@@ -40,6 +63,10 @@ require 'logger/colors'
                 @response.errors.each do |error|
                     @logger.warn(error)
                 end
+            end
+            @query_counter += 1
+            if (@query_counter % 10) == 0
+                self.save_cache
             end
         end
 
@@ -73,6 +100,30 @@ require 'logger/colors'
                 @cache_processed[word] = word_type
             end
             return word_type
+        end
+        
+        def save_cache
+            begin
+                unrecognizable_file = File.new("unrecog.json", "w+")
+                processed_file = File.new("processed.json", "w+")
+                unrecognizable_file.write(JSON.generate(@cache_unrecognizable))
+                unrecognizable_file.flush
+                unrecognizable_file.close()
+                @logger.info("\"Unrecognizable\" cache saved successfully.")
+            rescue
+                @logger.fatal("\"Unrecognizable\" cache encountered an error while saving.")
+                abort("Aborting due to error.")
+            end
+            begin
+                processed_file = File.new("processed.json", "w+")
+                processed_file.write(JSON.generate(@cache_processed))
+                processed_file.flush
+                processed_file.close()
+                @logger.info("\"Processed\" cache saved successfully.")
+            rescue
+                @logger.fatal("\"Processed\" cache encountered an error while saving.")
+                abort("Aborting due to error.")
+            end
         end
 
     end
