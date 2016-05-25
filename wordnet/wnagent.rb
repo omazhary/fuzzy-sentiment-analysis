@@ -55,9 +55,11 @@ require 'logger/colors'
                 query_response = query_http.request(query_request)
             rescue
                 @logger.error("An exception occured with the HTTP request \"#{@query_full}\"")
+                return false
             end
             if query_response.code != "200"
                 @logger.error("An error occured with the HTTP request \"#{@query_full}\"\n which returned a code #{query_response.code}")
+                return false
             else
                 @response = Nokogiri::XML(query_response.body)
                 @response.errors.each do |error|
@@ -68,6 +70,7 @@ require 'logger/colors'
             if (@query_counter % 10) == 0
                 self.save_cache
             end
+            return true
         end
 
         # Gets the type(s) of a word by querying wordnet
@@ -82,7 +85,9 @@ require 'logger/colors'
                 return word_type
             end
             # If it's not in the cache, query WordNet:
-            send_query(word)
+            unless send_query(word)
+                return []
+            end
             types = @response.css("h3")
             types.each do |type|
                 if type.text == "Your search did not return any results."
