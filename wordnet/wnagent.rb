@@ -117,6 +117,7 @@ require 'logger/colors'
                 @logger.info("\"Unrecognizable\" cache saved successfully.")
             rescue
                 @logger.fatal("\"Unrecognizable\" cache encountered an error while saving.")
+                puts JSON.generate(@cache_unrecognizable)
                 abort("Aborting due to error.")
             end
             begin
@@ -127,7 +128,8 @@ require 'logger/colors'
                 @logger.info("\"Processed\" cache saved successfully.")
             rescue
                 @logger.fatal("\"Processed\" cache encountered an error while saving.")
-                abort("Aborting due to error.")
+                puts JSON.generate(@cache_processed)
+                abort("Aborting due to error.")        
             end
         end
 
