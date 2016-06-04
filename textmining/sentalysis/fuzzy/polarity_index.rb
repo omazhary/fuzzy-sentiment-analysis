@@ -39,9 +39,6 @@ module SENTALYSIS
             if @entries == nil
                 @entries = Hash.new
             end
-            # We also need to keep track of how many corpora we've used as training samples which will help later when calculating the relative frequency.
-            @total_positive_corpora = @polarity_index["total_positive_corpora"]
-            @total_negative_corpora = @polarity_index["total_negative_corpora"]
         end
         
         # Updates the polarity of a given text by increasing and recalculating its number of encounters. If a text is not found, it is added.
@@ -68,6 +65,7 @@ module SENTALYSIS
             @entries[text]["negativity"] = @entries[text]["total_negative_encounters"] / @entries[text]["total_encounters"]
         end
         
+        # Saves the current state of the polarity index to disk.
         def save_polarity_file
             begin
                 @polarity_index_file = File.new(polarity_index_filename, "w+")
@@ -78,6 +76,16 @@ module SENTALYSIS
             rescue
                 @logger.fatal("File #{@polarity_index_filename} encountered an error while saving.")
                 abort("Aborting due to error.")
+            end
+        end
+        
+        # Returns the polarity information of a given word string as an array [positivity, negativity].
+        def get_polarity(src_word)
+            if !@entries.has_key? src_word
+                # This word has never been encountered before.
+                return [0.0, 0.0]
+            else
+                return [@entries[src_word]["positivity"], @entries[src_word]["negativity"]]
             end
         end
         
