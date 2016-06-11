@@ -2,13 +2,15 @@
 
 require 'logger'
 require 'logger/colors'
+require 'json'
 require_relative 'polarity_index'
+require_relative 'fuzzy'
 require_relative '../../../nlp/text'
 require_relative '../../../wordnet/wnagent'
 
 module SENTALYSIS
 
-    class FuzzyTrainer
+    class FuzzyTester
     
         attr_accessor :polarity
         attr_accessor :testing_dir
@@ -26,21 +28,24 @@ module SENTALYSIS
             @polarity_index = index
             @polarity = current_polarity
             @wordnet_agent = wn_agent
+            @classifier = SENTALYSIS::FuzzyClassifier.new(@polarity_index, @wordnet_agent)
         end
         
-        def train
+        def test
             @logger.info("Starting testing process...")
             file_counter = 1
+            correct_classfications = 0.0
             start_time = Time.now
             files = Dir.entries(@testing_dir)
             testing_state = []
+            testing_result = Hash.new
             if File.exists?("testing-state.json")
                 @logger.info("File \"testing-state.json\" found.")
                 begin
                     contents = File.read("testing-state.json")
                     testing _state = JSON.parse(contents)
                 rescue
-                    @logger.fatal("Unable to parse contents of file: \"testing-testing-state.json\"")
+                    @logger.fatal("Unable to parse contents of file: \"testing-state.json\"")
                     abort("Aborting due to error.")
                 end
                 @logger.info("State updated successfully.")
@@ -59,18 +64,13 @@ module SENTALYSIS
                             file.close
                             # Parse the file using the NLP elements:
                             text = NLP::Text.new(src_text, @wordnet_agent)
-                            text.paragraph_list.each do |paragraph|
-                                paragraph.sentence_list.each do |sentence|
-                                    sentence.clause_list.each do |clause|
-                                        clause.word_list.each do |word|
-                                            # Filter out adjectives:
-                                            if word.types.include? 'adjective'
-                                                # Update adjective polarity:
-                                                @polarity_index.update_polarity(word.src_text, @polarity)
-                                            end
-                                        end
-                                    end
-                                end
+                            # Classify the text:
+                            testing_result[filename] = @classifier.classify(text)
+                            if @polarity == testing_result[filename]["recommended_class"]
+                                testing_result[filename]["test_result"] = "passed"
+                                correct_classfications += 1.0
+                            else
+                                testing_result[filename]["test_result"] = "failed"
                             end
                             testing_state.push(full_filename)
                         end
@@ -82,9 +82,7 @@ module SENTALYSIS
             rescue
                 @logger.fatal("The testing process encountered an unrecoverable error. Exiting...")
             ensure
-                @logger.info("Saving polarity index...")
-                @polarity_index.save_polarity_file
-                @logger.info("Saving state...")
+                @logger.info("Saving testing state...")
                 begin
                     state_file = File.new("testing-state.json", "w+")
                     state_file.write(JSON.generate(testing_state))
@@ -96,13 +94,16 @@ module SENTALYSIS
                 ensure
                     @logger.info("Dumping testing state...")
                     puts JSON.generate(testing_state)
-                    abort("Exiting...")
                 end
+                end_time = Time.now
+                @logger.info("testing process ended after #{(end_time - start_time) / 60} minutes")
+                precision = correct_classfications / file_counter
+                puts "Test Statistics:"
+                puts "Files processed: #{file_counter}"
+                puts "Correct classifications: #{correct_classfications}"
+                puts "Incorrect classifications: #{file_counter - correct_classfications}"
+                puts "Precision: #{(correct_classfications / file_counter) * 100}%"
             end
-            @logger.info("Saving polarity index to disk...")
-            @polarity_index.save_polarity_file
-            end_time = Time.now
-            @logger.info("testing process ended after #{(end_time - start_time) / 60} minutes")
         end        
     end
     
