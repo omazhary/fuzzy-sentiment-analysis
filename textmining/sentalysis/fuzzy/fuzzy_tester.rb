@@ -35,6 +35,7 @@ module SENTALYSIS
             @logger.info("Starting testing process...")
             file_counter = 1
             correct_classfications = 0.0
+            total_classifications = 0.0
             start_time = Time.now
             files = Dir.entries(@testing_dir)
             testing_state = []
@@ -72,6 +73,7 @@ module SENTALYSIS
                             else
                                 testing_result[filename]["test_result"] = "failed"
                             end
+                            total_classifications += 1
                             testing_state.push(full_filename)
                         end
                     else
@@ -97,12 +99,12 @@ module SENTALYSIS
                 end
                 end_time = Time.now
                 @logger.info("testing process ended after #{(end_time - start_time) / 60} minutes")
-                precision = correct_classfications / file_counter
+                precision = correct_classfications / total_classifications
                 puts "Test Statistics:"
-                puts "Files processed: #{file_counter}"
+                puts "Files processed: #{total_classifications}"
                 puts "Correct classifications: #{correct_classfications}"
-                puts "Incorrect classifications: #{file_counter - correct_classfications}"
-                puts "Precision: #{(correct_classfications / file_counter) * 100}%"
+                puts "Incorrect classifications: #{total_classifications - correct_classfications}"
+                puts "Precision: #{(correct_classfications / total_classifications) * 100}%"
             end
         end        
     end
